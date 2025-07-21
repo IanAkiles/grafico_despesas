@@ -1,0 +1,91 @@
+import tkinter as tk
+from tkinter import messagebox
+from tkinter import ttk
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
+class AppDespesas:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Gráfico de Despesas")
+        self.root.geometry("400x400")
+        self.despesas = {}
+
+        # Campos de entrada
+        tk.Label(root, text="Categoria:").pack(pady=5)
+        self.categoria_entry = tk.Entry(root)
+        self.categoria_entry.pack()
+
+        tk.Label(root, text="Valor (R$):").pack(pady=5)
+        self.valor_entry = tk.Entry(root)
+        self.valor_entry.pack()
+
+        # Botão adicionar
+        tk.Button(root, text="Adicionar Despesa", command=self.adicionar_despesa).pack(pady=10)
+
+        # Tipo de gráfico
+        tk.Label(root, text="Tipo de Gráfico:").pack()
+        self.tipo_grafico = ttk.Combobox(root, values=["Pizza", "Barras"])
+        self.tipo_grafico.current(0)
+        self.tipo_grafico.pack()
+
+        # Botão gerar gráfico
+        tk.Button(root, text="Gerar Gráfico", command=self.gerar_grafico).pack(pady=15)
+
+    def adicionar_despesa(self):
+        categoria = self.categoria_entry.get().strip()
+        valor = self.valor_entry.get().strip()
+
+        if not categoria or not valor:
+            messagebox.showwarning("Atenção", "Preencha todos os campos.")
+            return
+
+        try:
+            valor = float(valor)
+            if valor <= 0:
+                raise ValueError
+        except ValueError:
+            messagebox.showerror("Erro", "Insira um valor numérico positivo.")
+            return
+
+        if categoria in self.despesas:
+            self.despesas[categoria] += valor
+        else:
+            self.despesas[categoria] = valor
+
+        self.categoria_entry.delete(0, tk.END)
+        self.valor_entry.delete(0, tk.END)
+
+        messagebox.showinfo("Sucesso", f"Despesa adicionada: {categoria} - R${valor:.2f}")
+
+    def gerar_grafico(self):
+        if not self.despesas:
+            messagebox.showwarning("Sem dados", "Adicione despesas primeiro.")
+            return
+
+        categorias = list(self.despesas.keys())
+        valores = list(self.despesas.values())
+
+        fig, ax = plt.subplots(figsize=(6, 4))
+
+        if self.tipo_grafico.get() == "Pizza":
+            ax.pie(valores, labels=categorias, autopct='%1.1f%%')
+            ax.set_title("Distribuição de Despesas - Pizza")
+        else:
+            ax.bar(categorias, valores, color="teal")
+            ax.set_title("Distribuição de Despesas - Barras")
+            ax.set_ylabel("Valor (R$)")
+            ax.set_xlabel("Categoria")
+
+        # Exibe o gráfico em nova janela
+        grafico_window = tk.Toplevel(self.root)
+        grafico_window.title("Gráfico de Despesas")
+        canvas = FigureCanvasTkAgg(fig, master=grafico_window)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+
+# Execução
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = AppDespesas(root)
+    root.mainloop()
